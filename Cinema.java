@@ -1,4 +1,12 @@
 import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Scanner;
 
 public class Cinema {
     private final String nomeCinema;
@@ -26,6 +34,8 @@ public class Cinema {
         sale = new ArrayList<>(nMax);
     }
 
+    //Aggiungere un costruttore con caricaDaFile
+
     /**
      * Controlla se la sala è già occupata da qualche film
      * @param s Sala
@@ -52,11 +62,14 @@ public class Cinema {
     public void aggiungiFilm(Film f){
         if(isSalaOccupata(f.getSala())){
             throw new IllegalArgumentException("La sala " + f.getSala() + " è già occupata");
-        } else if(sale.size() > nMax) {
-            throw new IndexOutOfBoundsException("Hai superato il numero di sale massime");
-        }else{
-            sale.add(f);
         }
+
+        if(sale.size()>= nMax){
+            throw new IndexOutOfBoundsException("Non ci sono sale disponibili");
+        }
+
+        sale.add(f);
+
     }
 
     /**
@@ -141,9 +154,74 @@ public class Cinema {
         }
     }
 
+    /**
+     * Carica da file csv la programmazione del cinema corrente
+     * Il delimitatore è il punto e virgola
+     * Potrei integrare il metodo con la possibilità di inserire il path e il delimiter
+     */
+    public void caricaDaFile(){
+        String filePath = new File("cinema.csv").getAbsolutePath();
+       // boolean isFirstLine = true;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+
+                String[] columns = line.split(";");
+                try{
+                    int d = Integer.parseInt(columns[1]);
+                    int p = Integer.parseInt(columns[3]);
+                    aggiungiFilm(new Film(columns[0], d, columns[2], p));
+                }
+                catch (NumberFormatException ex){
+                    System.out.println("La colonna 1 o la colonna 3 non contengono valori interi");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Errore nell'apertura del file");
+        }
+    }
+
+    /**
+     * Carica su un file csv la programmazione del cinema corrente
+     * Si può migliorare mettendo la possibilità di inserire delimiter
+     */
+    public void caricaSuFile(){
+        try (PrintWriter writer = new PrintWriter(new File(nomeCinema + ".csv"))) {
+            StringBuilder sb = new StringBuilder();
+
+            for(Film film : sale){
+               sb.append(film.getTitolo());
+               sb.append(";");
+               sb.append(film.getDurata());
+               sb.append(";");
+               sb.append(film.getSala());
+               sb.append(";");
+               sb.append(film.getPostiDisponibili());
+               sb.append("\n");
+            }
+
+            writer.write(sb.toString());
+            writer.close();
+            System.out.println("done!");
+
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     public static void main (String[] args){
         Cinema cinema = new Cinema ("Calvino");
-        Cinema cinema1 = new Cinema("Calvino", 50);
+        cinema.caricaDaFile();
+        cinema.caricaSuFile();
+        cinema.stampaProgrammazione();
+
+
+
+
+
+
+        /*Cinema cinema1 = new Cinema("Calvino", 50);
         cinema1.aggiungiFilm(new Film ("MeowMeow", 150, "13", 10));
         cinema.aggiungiFilm(new Film("Minions", 120, "12", 10));
         cinema.aggiungiFilm(new Film ("Il signore degli anelli", 120, "14", 10));
@@ -152,7 +230,8 @@ public class Cinema {
         System.out.println(cinema.filmPiuLungo());
         cinema.stampaProgrammazione();
         cinema.rimuoviFilm("Minions");
-        cinema.stampaProgrammazione();
+        cinema.stampaProgrammazione();*/
+
     }
 
 }
